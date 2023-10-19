@@ -53,7 +53,7 @@ func TestKnownNonMarketDays(t *testing.T) {
 	}
 }
 
-func TestPreviousMarketDay(t *testing.T) {
+func TestBefore(t *testing.T) {
 	cases := []struct {
 		start    time.Time
 		expected time.Time
@@ -66,7 +66,7 @@ func TestPreviousMarketDay(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := PreviousMarketDay(c.start)
+		actual := Before(c.start)
 		if actual != c.expected {
 			t.Fatalf("Expected previous market day %s, got %s", c.expected, actual)
 		}
