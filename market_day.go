@@ -42,10 +42,10 @@ func Before(date time.Time) time.Time {
 	return date
 }
 
-func PreviousMarketDays(date time.Time, count int) []time.Time {
-	days := make([]time.Time, 0, count)
+func BeforeN(date time.Time, n int) []time.Time {
+	days := make([]time.Time, 0, n)
 
-	for len(days) < count {
+	for len(days) < n {
 		date = Before(date)
 		days = append(days, date)
 	}

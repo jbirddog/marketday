@@ -91,7 +91,7 @@ func TestPreviousMarketDays(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := PreviousMarketDays(c.start, len(c.expected))
+		actual := BeforeN(c.start, len(c.expected))
 		aLen := len(actual)
 		eLen := len(c.expected)
 
