@@ -4,71 +4,79 @@ import (
 	"time"
 )
 
-const tradingDays uint8 = (1<<time.Monday |
-	1<<time.Tuesday |
-	1<<time.Wednesday |
-	1<<time.Thursday |
-	1<<time.Friday)
+type Day struct {
+	t time.Time
+}
+
+func MakeDay(year int, month time.Month, day int) Day {
+	return Day{time.Date(year, month, day, 15, 0, 0, 0, time.UTC)}
+}
 
 var holidays = map[time.Time]bool{
-	Day(2023, 1, 2):   true,
-	Day(2023, 1, 16):  true,
-	Day(2023, 2, 20):  true,
-	Day(2023, 4, 7):   true,
-	Day(2023, 5, 29):  true,
-	Day(2023, 6, 19):  true,
-	Day(2023, 7, 4):   true,
-	Day(2023, 9, 4):   true,
-	Day(2023, 11, 23): true,
-	Day(2023, 12, 25): true,
+	MakeDay(2023, 1, 2).t:   true,
+	MakeDay(2023, 1, 16).t:  true,
+	MakeDay(2023, 2, 20).t:  true,
+	MakeDay(2023, 4, 7).t:   true,
+	MakeDay(2023, 5, 29).t:  true,
+	MakeDay(2023, 6, 19).t:  true,
+	MakeDay(2023, 7, 4).t:   true,
+	MakeDay(2023, 9, 4).t:   true,
+	MakeDay(2023, 11, 23).t: true,
+	MakeDay(2023, 12, 25).t: true,
 }
 
 var halfDays = map[time.Time]bool{
-	Day(2023, 7, 3):   true,
-	Day(2023, 11, 24): true,
+	MakeDay(2023, 7, 3).t:   true,
+	MakeDay(2023, 11, 24).t: true,
 }
 
-func Day(year int, month time.Month, day int) time.Time {
-	return time.Date(year, month, day, 15, 0, 0, 0, time.UTC)
+func (d Day) IsMarketDay() bool {
+	return d.isTradingDay() && !d.isHoliday()
 }
 
-func Before(date time.Time) time.Time {
-	date = date.AddDate(0, 0, -1)
+func (d Day) IsFullMarketDay() bool {
+	return d.IsMarketDay() && !d.isHalfDay()
+}
 
-	for !IsMarketDay(date) {
-		date = date.AddDate(0, 0, -1)
+func (d Day) PreviousDay() Day {
+	return Day{d.t.AddDate(0, 0, -1)}
+}
+
+func (d Day) PreviousMarketDay() Day {
+	day := d.PreviousDay()
+
+	for !day.IsMarketDay() {
+		day = day.PreviousDay()
 	}
 
-	return date
+	return day
 }
 
-func BeforeN(date time.Time, n int) []time.Time {
-	days := make([]time.Time, 0, n)
+func (d Day) PreviousMarketDays(n int) []Day {
+	days := make([]Day, 0, n)
+	day := d
 
 	for len(days) < n {
-		date = Before(date)
-		days = append(days, date)
+		day = day.PreviousMarketDay()
+		days = append(days, day)
 	}
 
 	return days
 }
 
-func IsMarketDay(date time.Time) bool {
-	return isTradingDay(date) && !isHoliday(date)
+func (d Day) isTradingDay() bool {
+	switch d.t.Weekday() {
+	case time.Saturday, time.Sunday:
+		return false
+	default:
+		return true
+	}
 }
 
-func IsFullMarketDay(date time.Time) bool {
-	return IsMarketDay(date) && !isHalfDay(date)
+func (d Day) isHoliday() bool {
+	return holidays[d.t]
 }
 
-func isTradingDay(date time.Time) bool {
-	return tradingDays&(1<<date.Weekday()) != 0
-}
-
-func isHoliday(date time.Time) bool {
-	return holidays[date]
-}
-
-func isHalfDay(date time.Time) bool {
-	return halfDays[date]
+func (d Day) isHalfDay() bool {
+	return halfDays[d.t]
 }
