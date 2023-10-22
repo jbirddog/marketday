@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-const tradingDays uint8 = (1<<time.Monday |
-	1<<time.Tuesday |
-	1<<time.Wednesday |
-	1<<time.Thursday |
-	1<<time.Friday)
-
 var holidays = map[time.Time]bool{
 	Day(2023, 1, 2):   true,
 	Day(2023, 1, 16):  true,
@@ -43,11 +37,11 @@ func PreviousMarketDay(date time.Time) time.Time {
 }
 
 func PreviousMarketDays(date time.Time, count int) []time.Time {
-	days := make([]time.Time, 0, count)
+	days := make([]time.Time, count, count)
 
-	for len(days) < count {
+	for i := 0; i < count; i++ {
 		date = PreviousMarketDay(date)
-		days = append(days, date)
+		days[i] = date
 	}
 
 	return days
@@ -62,7 +56,12 @@ func IsFullMarketDay(date time.Time) bool {
 }
 
 func isTradingDay(date time.Time) bool {
-	return tradingDays&(1<<date.Weekday()) != 0
+	switch date.Weekday() {
+	case time.Saturday, time.Sunday:
+		return false
+	default:
+		return true
+	}
 }
 
 func isHoliday(date time.Time) bool {
