@@ -1,57 +1,53 @@
-package marketday
+package main
 
 import (
-	"encoding/json"
 	"testing"
+	"time"
 )
 
-type SampleConfig struct {
-	CurrentDay *Day `json:"currentDay"`
-}
-
 func TestKnownMarketDays(t *testing.T) {
-	days := []*Day{
-		NewDay(2023, 1, 3),
-		NewDay(2023, 4, 18),
-		NewDay(2023, 6, 22),
-		NewDay(2023, 7, 3),
-		NewDay(2023, 10, 31),
-		NewDay(2023, 11, 24),
+	days := []time.Time{
+		Day(2023, 1, 3),
+		Day(2023, 4, 18),
+		Day(2023, 6, 22),
+		Day(2023, 7, 3),
+		Day(2023, 10, 31),
+		Day(2023, 11, 24),
 	}
 
 	for _, day := range days {
-		if !day.IsMarketDay() {
-			t.Fatalf("Expected %s to be a market day.", day.t)
+		if !IsMarketDay(day) {
+			t.Fatalf("Expected %s to be a market day.", day)
 		}
 
 	}
 }
 
 func TestKnownHalfMarketDays(t *testing.T) {
-	days := []*Day{
-		NewDay(2023, 7, 3),
-		NewDay(2023, 11, 24),
+	days := []time.Time{
+		Day(2023, 7, 3),
+		Day(2023, 11, 24),
 	}
 
 	for _, day := range days {
-		if day.IsFullMarketDay() {
-			t.Fatalf("Did not expect %s to be a full market day.", day.t)
+		if IsFullMarketDay(day) {
+			t.Fatalf("Did not expect %s to be a full market day.", day)
 		}
 	}
 }
 
 func TestKnownNonMarketDays(t *testing.T) {
-	days := []*Day{
-		NewDay(2023, 1, 2),
-		NewDay(2023, 2, 18),
-		NewDay(2023, 4, 7),
-		NewDay(2023, 10, 29),
-		NewDay(2023, 11, 23),
+	days := []time.Time{
+		Day(2023, 1, 2),
+		Day(2023, 2, 18),
+		Day(2023, 4, 7),
+		Day(2023, 10, 29),
+		Day(2023, 11, 23),
 	}
 
 	for _, day := range days {
-		if day.IsMarketDay() {
-			t.Fatalf("Did not expect %s to be a market day.", day.t)
+		if IsMarketDay(day) {
+			t.Fatalf("Did not expect %s to be a market day.", day)
 		}
 
 	}
@@ -59,43 +55,43 @@ func TestKnownNonMarketDays(t *testing.T) {
 
 func TestPreviousMarketDay(t *testing.T) {
 	cases := []struct {
-		start    *Day
-		expected *Day
+		start    time.Time
+		expected time.Time
 	}{
-		{NewDay(2023, 1, 3), NewDay(2022, 12, 30)},
-		{NewDay(2023, 4, 18), NewDay(2023, 4, 17)},
-		{NewDay(2023, 1, 16), NewDay(2023, 1, 13)},
-		{NewDay(2023, 11, 24), NewDay(2023, 11, 22)},
-		{NewDay(2023, 7, 12), NewDay(2023, 7, 11)},
+		{Day(2023, 1, 3), Day(2022, 12, 30)},
+		{Day(2023, 4, 18), Day(2023, 4, 17)},
+		{Day(2023, 1, 16), Day(2023, 1, 13)},
+		{Day(2023, 11, 24), Day(2023, 11, 22)},
+		{Day(2023, 7, 12), Day(2023, 7, 11)},
 	}
 
 	for _, c := range cases {
-		actual := c.start.PreviousMarketDay()
-		if !actual.Equal(c.expected) {
-			t.Fatalf("Expected previous market day %s, got %s", c.expected.t, actual.t)
+		actual := PreviousMarketDay(c.start)
+		if actual != c.expected {
+			t.Fatalf("Expected previous market day %s, got %s", c.expected, actual)
 		}
 	}
 }
 
 func TestPreviousMarketDays(t *testing.T) {
 	cases := []struct {
-		start    *Day
-		expected []*Day
+		start    time.Time
+		expected []time.Time
 	}{
-		{NewDay(2023, 1, 3), []*Day{NewDay(2022, 12, 30), NewDay(2022, 12, 29)}},
-		{NewDay(2023, 4, 18), []*Day{NewDay(2023, 4, 17)}},
-		{NewDay(2023, 7, 1), []*Day{
-			NewDay(2023, 6, 30),
-			NewDay(2023, 6, 29),
-			NewDay(2023, 6, 28),
-			NewDay(2023, 6, 27),
-			NewDay(2023, 6, 26),
-			NewDay(2023, 6, 23),
+		{Day(2023, 1, 3), []time.Time{Day(2022, 12, 30), Day(2022, 12, 29)}},
+		{Day(2023, 4, 18), []time.Time{Day(2023, 4, 17)}},
+		{Day(2023, 7, 1), []time.Time{
+			Day(2023, 6, 30),
+			Day(2023, 6, 29),
+			Day(2023, 6, 28),
+			Day(2023, 6, 27),
+			Day(2023, 6, 26),
+			Day(2023, 6, 23),
 		}},
 	}
 
 	for _, c := range cases {
-		actual := c.start.PreviousMarketDays(len(c.expected))
+		actual := PreviousMarketDays(c.start, len(c.expected))
 		aLen := len(actual)
 		eLen := len(c.expected)
 
@@ -104,27 +100,9 @@ func TestPreviousMarketDays(t *testing.T) {
 		}
 
 		for i, a := range actual {
-			if !a.Equal(c.expected[i]) {
-				t.Fatalf("Expected previous market day[%d] %s, got %s", i, c.expected[i].t, a.t)
+			if a != c.expected[i] {
+				t.Fatalf("Expected previous market day[%d] %s, got %s", i, c.expected, a)
 			}
 		}
-	}
-}
-
-func TestMarshalJSON(t *testing.T) {
-
-}
-
-func TestUnmarshalJSON(t *testing.T) {
-	configJSON := []byte(`{"currentDay": "2023-10-18T15:00:00Z"}`)
-
-	var config *SampleConfig
-	if err := json.Unmarshal(configJSON, &config); err != nil {
-		t.Fatalf("Failed to unmarshal json: %v", err)
-	}
-
-	expected := NewDay(2023, 10, 18)
-	if !config.CurrentDay.Equal(expected) {
-		t.Fatalf("Expected %s after unmarshal, got %s", expected.t, config.CurrentDay.t)
 	}
 }
